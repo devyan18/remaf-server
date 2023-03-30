@@ -19,7 +19,7 @@ router.get('/estaciones', async (req, res) => {
 
     res.json(rows);
   } catch (error) {
-    return res.status(400).json({ errors: 'Errores' });
+    return res.status(400).json({ error });
   }
 });
 
@@ -48,7 +48,7 @@ router.put(
       const [rows, fields] = await conexion.execute(sql);
       res.json({ status: 'Estacion modificada!' });
     } catch (error) {
-      return res.status(400).json({ errors: 'Errores' });
+      return res.status(400).json({ error });
     }
   }
 );
@@ -71,7 +71,7 @@ router.post(
       const [rows, fields] = await conexion.execute(sql);
       return res.json({ status: 'Estacion agregada!' });
     } catch (error) {
-      return res.status(400).json({ errors: 'Errores' });
+      return res.status(400).json({ error });
     }
   }
 );
@@ -86,7 +86,7 @@ router.delete('/estaciones/:id', async (req, res) => {
     const [rows, fields] = await conexion.execute(sql);
     res.json({ status: 'Estacion Eliminada' });
   } catch (error) {
-    return res.status(400).json({ errors: 'Errores' });
+    return res.status(400).json({ error });
   }
 });
 
@@ -98,7 +98,7 @@ router.get('/localidades', async (req, res) => {
     const [rows, fields] = await conexion.execute(sql);
     res.json(rows);
   } catch (error) {
-    return res.status(400).json({ errors: 'errores' });
+    return res.status(400).json({ error });
   }
 });
 
@@ -112,7 +112,7 @@ router.get('/:id', async (req, res) => {
     const [rows, fields] = await conexion.execute(sql);
     res.json(rows);
   } catch (error) {
-    return res.status(400).json({ errors: 'errores' });
+    return res.status(400).json({ error });
   }
 });
 
@@ -135,7 +135,7 @@ router.get(
       const [rows, fields] = await conexion.execute(sql);
       res.json(rows);
     } catch (error) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error });
     }
   }
 );
@@ -191,7 +191,7 @@ router.get('/', async (req, res) => {
     const [rows, fields] = await conexion.execute(sql);
     res.json(rows);
   } catch (error) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ error });
   }
 });
 
@@ -223,7 +223,7 @@ router.post('/', cors(), async function (req, res) {
       const [rows2, fields2] = await conexion.execute(sql2);
       res.json({ status: 'Lectura del sensor agregada' });
     } catch (error) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error });
     }
   }
 });

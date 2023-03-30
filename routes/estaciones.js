@@ -8,17 +8,18 @@ const { json } = require('express');
 
 // get estaciones
 
-router.get('/estaciones', check(), (req, res) => {
+router.get('/estaciones', async (req, res) => {
   try {
     let sql = `select * from estaciones where fecha_baja is null`;
-    conexion.query(sql, (err, rows, fields) => {
-      if (err) throw err;
-      else {
-        res.json(rows);
-      }
-    });
+    const [rows, fields] = await conexion.execute(sql);
+
+    if (!rows) {
+      return res.status(200).json({ data: 'No hay data' });
+    }
+
+    res.json(rows);
   } catch (error) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: 'Errores' });
   }
 });
 
@@ -31,7 +32,7 @@ router.put(
   check('direccion', 'direccion is required').exists().not().isEmpty(),
   check('latitude', 'latitude is required').exists().not().isEmpty(),
   check('longitude', 'longitude is required').exists().not().isEmpty(),
-  (req, res) => {
+  async (req, res) => {
     const { id } = req.params;
     const { nombre, id_localidad, direccion, latitude, longitude } = req.body;
     console.log(id);
@@ -44,15 +45,10 @@ router.put(
     longitude = '${longitude}'
     where id_estaciones = '${id}'`;
 
-      conexion.query(sql, (err, rows, fields) => {
-        if (err) {
-          throw err;
-        } else {
-          res.json({ status: 'Estacion modificada!' });
-        }
-      });
+      const [rows, fields] = await conexion.execute(sql);
+      res.json({ status: 'Estacion modificada!' });
     } catch (error) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ errors: 'Errores' });
     }
   }
 );
@@ -66,100 +62,83 @@ router.post(
   check('direccion', 'direccion is required').exists().not().isEmpty(),
   check('latitude', 'latitude is required').exists().not().isEmpty(),
   check('longitude', 'longitude is required').exists().not().isEmpty(),
-  (req, res) => {
+  async (req, res) => {
     const { nombre, id_localidad, direccion, latitude, longitude } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     try {
       let sql = `INSERT into estaciones (descri_estaciones,direccion_estaciones,rela_localidad,latitude,longitude) VALUES ('${nombre}','${direccion}','${id_localidad}','${latitude}','${longitude}')`;
 
-      conexion.query(sql, (err, rows, fields) => {
-        if (err) {
-          throw err;
-        } else {
-          res.json({ status: 'Estacion agregada!' });
-        }
-      });
+      const [rows, fields] = await conexion.execute(sql);
+      return res.json({ status: 'Estacion agregada!' });
     } catch (error) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ errors: 'Errores' });
     }
   }
 );
 
 // delete estaciones
 
-router.delete('/estaciones/:id', (req, res) => {
+router.delete('/estaciones/:id', async (req, res) => {
   const { id } = req.params;
   let sql = `UPDATE estaciones set 
     fecha_baja is null where id_estaciones = '${id}'`;
   try {
-    conexion.query(sql, (err, rows, fields) => {
-      if (err) throw err;
-      else {
-        res.json({ status: 'Estacion Eliminada' });
-      }
-    });
+    const [rows, fields] = await conexion.execute(sql);
+    res.json({ status: 'Estacion Eliminada' });
   } catch (error) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: 'Errores' });
   }
 });
 
 //get all localidades
 
-router.get('/localidades', (req, res) => {
+router.get('/localidades', async (req, res) => {
   try {
     let sql = `select * from localidades`;
-    conexion.query(sql, (err, rows, fields) => {
-      if (err) throw err;
-      else {
-        res.json(rows);
-      }
-    });
+    const [rows, fields] = await conexion.execute(sql);
+    res.json(rows);
   } catch (error) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: 'errores' });
   }
 });
 
 // get ultima medicion de la estacion
 
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
     let sql = `SELECT * FROM sensores,estaciones WHERE rela_estaciones=id_estaciones 
     and id_estaciones='${id}' and fecha_baja is null ORDER by id_sensores DESC LIMIT 1 `;
-    conexion.query(sql, (err, rows, fields) => {
-      if (err) throw err;
-      else {
-        res.json(rows);
-      }
-    });
+    const [rows, fields] = await conexion.execute(sql);
+    res.json(rows);
   } catch (error) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: 'errores' });
   }
 });
 
 // get todas las mediciones de un estacion en una fecha
 
-router.get('/:id/:date', param('date').isISO8601().isDate(), (req, res) => {
-  const { id, date } = req.params;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+router.get(
+  '/:id/:date',
+  param('date').isISO8601().isDate(),
+  async (req, res) => {
+    const { id, date } = req.params;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  try {
-    let sql = `SELECT * FROM sensores,estaciones WHERE rela_estaciones=id_estaciones 
-    and fecha_baja is null and id_estaciones='${id}'  
+    try {
+      let sql = `SELECT * FROM sensores,estaciones WHERE rela_estaciones=id_estaciones
+    and fecha_baja is null and id_estaciones='${id}'
     and DATE_FORMAT(date_estaciones,'%Y-%m-%d') = '${date}' ORDER by id_sensores DESC`;
-    conexion.query(sql, (err, rows, fields) => {
-      if (err) throw err;
-      else {
-        res.json(rows);
-      }
-    });
-  } catch (error) {
-    return res.status(400).json({ errors: errors.array() });
+      const [rows, fields] = await conexion.execute(sql);
+      res.json(rows);
+    } catch (error) {
+      return res.status(400).json({ errors: errors.array() });
+    }
   }
-});
+);
 
 // get todas las mediciones de un estacion en un periodo
 
@@ -167,7 +146,7 @@ router.get(
   '/:id/:dateDesde/:dateHasta',
   param('dateDesde').isISO8601().isDate(),
   param('dateHasta').isISO8601().isDate(),
-  (req, res) => {
+  async (req, res) => {
     const { id, dateDesde, dateHasta } = req.params;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -175,15 +154,11 @@ router.get(
     }
 
     try {
-      let sql = `SELECT * FROM sensores,estaciones WHERE rela_estaciones=id_estaciones 
-        and fecha_baja is null and id_estaciones='${id}'  
+      let sql = `SELECT * FROM sensores,estaciones WHERE rela_estaciones=id_estaciones
+        and fecha_baja is null and id_estaciones='${id}'
         and   date_estaciones > '${dateDesde}' and date_estaciones >= '${dateHasta}' ORDER by id_sensores DESC`;
-      conexion.query(sql, (err, rows, fields) => {
-        if (err) throw err;
-        else {
-          res.json(rows);
-        }
-      });
+      const [rows, fields] = await conexion.execute(sql);
+      res.json(rows);
     } catch (error) {
       res.json(error);
     }
@@ -192,7 +167,7 @@ router.get(
 
 // ultima medicion de cada estacion
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     let sql = `SELECT
     id_estaciones as id,
@@ -213,12 +188,8 @@ router.get('/', (req, res) => {
     INNER JOIN sensores 
     ON estaciones.ultima_medicion_sensores = sensores.id_sensores
     where fecha_baja is null`;
-    conexion.query(sql, (err, rows, fields) => {
-      if (err) throw err;
-      else {
-        res.json(rows);
-      }
-    });
+    const [rows, fields] = await conexion.execute(sql);
+    res.json(rows);
   } catch (error) {
     return res.status(400).json({ errors: errors.array() });
   }
@@ -231,7 +202,7 @@ router.post('/', cors(), async function (req, res) {
     res.json({ status: 'datos incompletos' });
   } else {
     try {
-      let sql = `insert into sensores(temperatura_sensores,
+      let sql1 = `insert into sensores(temperatura_sensores,
             humedad_sensores,
             precipitacion_sensores,
             direcc_viento_sensores,
@@ -243,26 +214,14 @@ router.post('/', cors(), async function (req, res) {
             ,'${dir}'
             ,'${vel}'
             ,'${estacion}');`;
-      conexion.query(sql, (err, rows, fields, result) => {
-        if (err) {
-          res.json(err);
-        } else {
-          const id = rows.insertId;
-          // actualizamos la ultima medicion de la tabla estaciones
-          let sql = `UPDATE estaciones SET
-                    ultima_medicion_sensores = '${id}'
-                    where id_estaciones = '${estacion}';`;
-          conexion.query(sql, (err, rows, fields) => {
-            if (err) {
-              res.json(err);
-            } else {
-              // damos de baja la medicion actual anterior
-
-              res.json({ status: 'Lectura del sensor agregada' });
-            }
-          });
-        }
-      });
+      const [rows1, fields1] = await conexion.execute(sql1);
+      const id = rows1.insertId;
+      // actualizamos la ultima medicion de la tabla estaciones
+      let sql2 = `UPDATE estaciones SET
+              ultima_medicion_sensores = '${id}'
+              where id_estaciones = '${estacion}';`;
+      const [rows2, fields2] = await conexion.execute(sql2);
+      res.json({ status: 'Lectura del sensor agregada' });
     } catch (error) {
       return res.status(400).json({ errors: errors.array() });
     }

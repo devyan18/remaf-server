@@ -11,8 +11,7 @@ app.use(express.json())
 // solution to CORS error
 
 
-
-app.use(cors())
+app.use(cors());
 
 require('./config/conexion');
 

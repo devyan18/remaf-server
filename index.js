@@ -8,7 +8,13 @@ const app = express();
 
 //admitir tipos de datos
 app.use(express.json())
-app.use(cors())
+// solution to CORS error
+
+
+
+app.use(cors({
+  origin: '*'
+}))
 
 require('./config/conexion');
 

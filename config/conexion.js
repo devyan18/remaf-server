@@ -1,10 +1,10 @@
 const mysql = require('mysql2');
 const conexion = mysql.createConnection({
-    user: 'root',
-    password: 'ZoRrWX89bW40pxFWbKRc',
-    host: 'containers-us-west-97.railway.app',
-    database: 'railway',
-    port: 6714,
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    host: process.env.HOST,
+    database: process.env.DATABASE,
+    port: process.env.PORT,
 });
 
 conexion.connect((err)=>{
